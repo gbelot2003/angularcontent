@@ -1,0 +1,16 @@
+<div class="col-md-12">
+	<div class="row">
+		<div class="col-md-4" ng-repeat="var in vars">
+			<h2 class="title">
+				<a ng-href="{{var.node.ruta}}">
+					{{var.node.title}}
+				</a>
+			</h2>	
+			<div class="body">
+				<img ng-src="{{var.node.imagenes}}" class="img-responsive img-thumbnail" alt="Responsive image">
+				{{var.node.body | limitTo: 150 }}
+			</div>
+		</div>
+	</div>
+</div>
+<pagination total-items="totalItems" items-pre-page="itemPerPage" ng-model="currentPage" ng-change="pageChanged(currentPage)"></pagination>

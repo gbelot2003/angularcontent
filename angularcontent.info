@@ -1,0 +1,12 @@
+name = Angular Content Module
+description = "Provides an angular integration."
+package = Costume Developer
+core = 7.x
+
+dependencies[] = system (>7.10)
+
+version = "7.x-1"
+core = "7.x"
+
+
+

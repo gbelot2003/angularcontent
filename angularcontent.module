@@ -1,0 +1,117 @@
+<?php
+
+/***
+* implement of hook_menu
+*
+***/
+function angularcontent_menu(){
+	$items['angular'] = array(
+		'page callback' => 'all_angular_page',
+		'access arguments' => array('access content')
+	);
+
+	$items['json/custom-api/content'] = array(
+		'page callback' => 'content_json_endpoint_page',
+		'access arguments' => array('access content')
+	);
+
+	return $items;
+};
+
+
+function angularcontent_theme(){
+	return array(
+		'all_angular' => array(
+			'template' => 'all-angular',
+		),
+	);
+}
+
+/**
+*
+* All Content callbacks
+*
+**/
+
+function all_angular_page(){
+
+	drupal_add_library('angularjs', 'angularjs');
+
+	$path = drupal_get_path('module', 'angularcontent');
+	
+	drupal_add_js($path . '/js/content.gen.js');
+
+	return theme('all_angular');
+}
+
+
+/**
+*
+* Page Callback
+*
+**/
+
+function content_json_endpoint_page(){
+	// Vamos a imprimir el header 
+	header('Content-type: application/json');
+
+	// Print Json a la pantalla
+
+	print json_encode(get_all_content_json_array());
+	// Finalizamos para que no se renderice el resto del theme API y nos quedamos con el formato JSON
+	exit;
+}
+
+/**
+*
+* Arreglemos contenido como un array de JSON
+*
+**/
+
+function get_all_content_json_array(){
+	$content = array();
+
+	$page = $_GET['item_per_page'];
+
+	$offset = ($page - 1) * $item_per_page;
+
+	$query = new EntityFiekdQuery();
+	$query->entityCondition('entity_type', 'node')
+	->entityCondition('bundle', 'alimentos')
+	->entityCondition('status', 1)
+	->range($offset, $item_per_page);
+
+	$result = $query->execute();
+
+	$json_content = array();
+	if (isset($result['node'])) {
+
+		$query = new EntityFiekdQuery();
+		$query->entityCondition('entity_type', 'node')
+		->entityCondition('bundle', 'alimentos')
+		->entityCondition('status', 1)	
+		->count();
+
+		$result = $query->execute();
+
+		$content_nids = array_keys($result['node']);
+		$contents = entity_load('node', $content_nids);
+
+		foreach ($contents as $content) {
+			# code...
+			$content_warpper = entity_metadata_warpper('node', $content);
+			$image = $content_warpper->field_imagenes->value();
+
+			$json_contents['nodes'][] = array(
+				'node' => array(
+					'title' => $content->title,
+					'Body' => $body['value'],
+					'Image' => image_style_url('medium', $image['uri']),
+				),
+			);
+		}
+		$json_contents['total'] = $count;
+	}
+
+	return $json_contents;
+}
