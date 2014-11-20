@@ -12,6 +12,7 @@ function angularcontent_menu(){
 
 	$items['json/custom-api/content'] = array(
 		'page callback' => 'content_json_endpoint_page',
+		'delivery callback' => 'drupal_json_output',
 		'access arguments' => array('access content')
 	);
 
@@ -68,50 +69,67 @@ function content_json_endpoint_page(){
 *
 **/
 
-function get_all_content_json_array(){
-	$content = array();
+function get_all_content_json_array() {
+  $contenido = array();
 
-	$page = $_GET['item_per_page'];
+  // Fetch the page & items_per_page parameters
+  $page = $_GET['page'];
+  $items_per_page = $_GET['items_per_page'];
 
-	$offset = ($page - 1) * $item_per_page;
+  // Calculate the offset position within the result set. This is where the
+  // 'slice' of results for the current page will be calculated from.
+  $offset = ($page - 1) * $items_per_page;
 
-	$query = new EntityFiekdQuery();
-	$query->entityCondition('entity_type', 'node')
-	->entityCondition('bundle', 'alimentos')
-	->entityCondition('status', 1)
-	->range($offset, $item_per_page);
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'node')
+    ->entityCondition('bundle', 'alimentos')
+    ->propertyCondition('status', NODE_PUBLISHED)
+    ->range($offset, $items_per_page);
 
-	$result = $query->execute();
+  // Fetch the cats
+  $result = $query->execute();
 
-	$json_content = array();
-	if (isset($result['node'])) {
+  $json_contenido = array();
 
-		$query = new EntityFiekdQuery();
-		$query->entityCondition('entity_type', 'node')
-		->entityCondition('bundle', 'alimentos')
-		->entityCondition('status', 1)	
-		->count();
+  if (isset($result['node'])) {
+    // We also need the total number of *all* cats for pagination. We only
+    // retrieve this if we have queried a non-empty result set.
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', 'alimentos')
+      ->propertyCondition('status', 1)
+      ->count();
 
-		$result = $query->execute();
+    $count = $query->execute();
 
-		$content_nids = array_keys($result['node']);
-		$contents = entity_load('node', $content_nids);
+    $content_nids = array_keys($result['node']);
+    $contenido = entity_load('node', $content_nids);
+    $total = 1;
+    foreach ($contenido as $contenidos) {
+      // We use Entity API's entity_metadata_wrapper.
+      $content_wrapper = entity_metadata_wrapper('node', $contenidos);
 
-		foreach ($contents as $content) {
-			# code...
-			$content_warpper = entity_metadata_warpper('node', $content);
-			$image = $content_warpper->field_imagenes->value();
+      $body = $content_wrapper->body->value();
+      $image = $content_wrapper->field_imagenes->value();
+      
 
-			$json_contents['nodes'][] = array(
-				'node' => array(
-					'title' => $content->title,
-					'Body' => $body['value'],
-					'Image' => image_style_url('medium', $image['uri']),
-				),
-			);
-		}
-		$json_contents['total'] = $count;
-	}
+      $json_contenido['nodes'][] = array(
+        'node' => array(
+          'title' => $contenidos->title,
+          'Body' => $body['value'],
+          'Image' => image_style_url('front-images', $image['uri']),
+          'path' => $content_nids
+         ),
+      );
+      $total++;
+    }
 
-	return $json_contents;
+    // Set the $cats[total] value with the total number of cats from the entire
+    // result set.
+    $json_contenido['total'] = $count;
+  }
+
+  return $json_contenido;
+
+//  return print_r($result);
 }

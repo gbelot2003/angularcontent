@@ -2,16 +2,17 @@ angular.module('app')
 .controller('mainController', function($scope, search) {
     $scope.currentPage = 1;
     $scope.itemsPerPage = 6;
-    $scope.content = [];
+    $scope.alimentos = [];
 
     $scope.lunchSearch = function(){
         var promise = search.getResults({
-            'page' : $scope.currentPage,
-            'items_per_page' : $scope.itemsPerPage
+            'items_per_page' : $scope.itemsPerPage,
+            'page' : $scope.currentPage
+
         });
 
         promise.then(function(result){
-            $scope.content = result.nodes;
+            $scope.alimentos = result.nodes;
             $scope.totalItems = result.total;
         });
     };

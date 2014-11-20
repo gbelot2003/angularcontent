@@ -32,8 +32,9 @@ angular.module('app')
 
     $scope.lunchSearch = function(){
         var promise = search.getResults({
-            'page' : $scope.currentPage,
-            'items_per_page' : $scope.itemsPerPage
+            'items_per_page' : $scope.itemsPerPage,
+            'page' : $scope.currentPage
+
         });
 
         promise.then(function(result){
@@ -56,7 +57,7 @@ angular.module('app')
 
 angular.module('app')
 .service('search', ['$http', '$q', function ($http, $q) {
-	var url = '/json/custom-api/content';
+	var url = 'json/custom-api/content';
 
 	var getResults = function(query){
 		var deferred = $q.defer();
